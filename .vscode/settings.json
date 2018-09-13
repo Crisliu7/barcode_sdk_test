@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "dirent.h": "c",
+        "assert.h": "c",
+        "cstdint": "cpp"
+    }
+}
