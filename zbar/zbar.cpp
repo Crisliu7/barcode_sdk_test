@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <fstream>
 // #include <opencv2/core/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 // #include <opencv2/highgui/highgui.hpp>
@@ -113,32 +114,32 @@ InputImage const *get_input_files(int argc, char const *argv[])
 /**
  * opencv read single image
  */
-static bool read_image(const char* image_name, uint8_t **data, uint32_t *width, uint32_t *height, uint32_t *row_stride)
-{
+// static bool read_image(const char* image_name, uint8_t **data, uint32_t *width, uint32_t *height, uint32_t *row_stride)
+// {
 
-  cv::Mat image;
-  const std::string image_name_str(image_name);
-  image = cv::imread(image_name_str, cv::IMREAD_GRAYSCALE);
-  if(image.empty())               
-  {
-    std::cout <<  "OpenCV could not open or find the image" << std::endl ;
-    return false;
-  }
-  // *data = image.data;
-  *width = image.cols;
-  *height = image.rows;
-  *row_stride = image.step[0];
+//   cv::Mat image;
+//   const std::string image_name_str(image_name);
+//   image = cv::imread(image_name_str, cv::IMREAD_GRAYSCALE);
+//   if(image.empty())               
+//   {
+//     std::cout <<  "OpenCV could not open or find the image" << std::endl ;
+//     return false;
+//   }
+//   // *data = image.data;
+//   *width = image.cols;
+//   *height = image.rows;
+//   *row_stride = image.step[0];
 
-  const int blob_size = *row_stride * *height;
+//   const int blob_size = *row_stride * *height;
 
-  *data = (uint8_t *)malloc(blob_size);
-  memcpy(*data, image.data, blob_size);
+//   *data = (uint8_t *)malloc(blob_size);
+//   memcpy(*data, image.data, blob_size);
 
-  std::cout<< "Image: "<< image_name << ", size: " << *width << " * " << *height << ", stride " << *row_stride << "("<< blob_size << " bytes)" << std::endl;
+//   std::cout<< "Image: "<< image_name << ", size: " << *width << " * " << *height << ", stride " << *row_stride << "("<< blob_size << " bytes)" << std::endl;
 
 
-  return true;
-}
+//   return true;
+// }
 
 
 
@@ -150,6 +151,11 @@ int main(int argc, const char* argv[])
 		return 0; 
 	}
 
+  float fCostTime = 0;
+  std::vector<std::string> result_vector;
+  std::vector<float> time_vector;
+  std::vector<std::string> type_vector;
+
   // create a reader
   zbar::ImageScanner scanner;
 
@@ -158,34 +164,41 @@ int main(int argc, const char* argv[])
 
   // load image file/folder
   InputImage const * const images = get_input_files(argc, argv);
-  uint8_t *image_data = NULL;
-  float fCostTime = 0;
+  // uint8_t *image_data = NULL;
 
   // traverse loaded image
   for (InputImage const *current_image = images; current_image != NULL; current_image = current_image->next)
   {
-    // uint32_t image_width = 1, image_height = 1, row_stride = 1;
+    // opencv read image
     uint32_t image_width, image_height, row_stride;
-    
-    // if (read_image(current_image->file_name, &image_data, &image_width, &image_height, &row_stride) == false)
-    if (read_image(current_image->file_name, &image_data, &image_width, &image_height, &row_stride) == false)
+    cv::Mat cv_image;
+    const std::string image_name_str(current_image->file_name);
+    cv_image = cv::imread(image_name_str, cv::IMREAD_GRAYSCALE);
+    if(cv_image.empty())               
     {
-      printf("Failed to load image '%s'.\n", current_image->file_name);
+      std::cout <<  "OpenCV could not open or find the image " << image_name_str << std::endl ;
+      return 0;
     }
+    image_width = cv_image.cols;
+    image_height = cv_image.rows;
+    row_stride = cv_image.step[0];
+    const int blob_size = row_stride * image_height;
+    std::cout<< "Image: "<< image_name_str << ", size: " << image_width << " * " << image_height << ", stride " << row_stride << "("<< blob_size << " bytes)" << std::endl;
+
     
     // decode and calculate time cost
 	  struct timeval ullTimeBegin, ullTimeEnd;
     gettimeofday(&ullTimeBegin, NULL);    
     // wrap image data
-    zbar::Image image(image_width, image_height, "GREY", image_data, row_stride);
+    zbar::Image zbar_image(image_width, image_height, "GREY", cv_image.data, row_stride);
     // scan the image for barcodes
-    int n = scanner.scan(image);
+    int n = scanner.scan(zbar_image);
     gettimeofday(&ullTimeEnd, NULL);
     fCostTime = (float)((ullTimeEnd.tv_sec * 1000 * 1000 +  ullTimeEnd.tv_usec) - (ullTimeBegin.tv_sec * 1000 * 1000 + ullTimeBegin.tv_usec))/(1000 * 1000);
 
 
 
-    if (image.symbol_begin() == image.symbol_end()) 
+    if (zbar_image.symbol_begin() == zbar_image.symbol_end()) 
     {
       std::cout << "    No barcode found. Total time spent: " << fCostTime << " seconds."<< std::endl;
     }
@@ -194,18 +207,49 @@ int main(int argc, const char* argv[])
     }
     // output decoding results
     int iIndex = 0;
-    for(zbar::Image::SymbolIterator symbol = image.symbol_begin(); symbol != image.symbol_end(); ++symbol) 
+    for(zbar::Image::SymbolIterator symbol = zbar_image.symbol_begin(); symbol != zbar_image.symbol_end(); ++symbol) 
     {
       std::cout << "        Barcode " << iIndex + 1 << ":" << std::endl;
       std::cout << "            Type: " << symbol->get_type_name() << std::endl;
       std::cout << "            Value: " << symbol->get_data() << std::endl;
+      result_vector.push_back(symbol->get_data());
+      time_vector.push_back(fCostTime);
+      type_vector.push_back(symbol->get_type_name());
       iIndex++;
     }
 
     // clean up
-    image.set_data(NULL, 0);
+    zbar_image.set_data(NULL, 0);
 
   }
+
+
+  // write to csv file
+  int result_size = result_vector.size();
+  int time_size = time_vector.size();
+  int type_size = type_vector.size();
+  if(result_size != time_size)
+  {
+    std::cout << "The result vector size is not equal to time vector size !!! cannot write to csv file" << std::endl; 
+    return 0;
+  }
+  std::ofstream ofs ("zbar_result.csv", std::ofstream::out);
+  for(int i = 0; i < result_size; i++)
+  {
+    ofs << result_vector[i] << '\t';
+  }
+  ofs << '\n';
+  for(int i = 0; i < time_size; i++)
+  {
+    ofs << time_vector[i] << '\t';
+  }
+  ofs << '\n';
+  for(int i = 0; i < type_size; i++)
+  {
+    ofs << type_vector[i] << '\t';
+  }
+  ofs.close();
+  return 0;
 }
 
 

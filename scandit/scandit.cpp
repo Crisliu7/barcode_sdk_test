@@ -14,14 +14,14 @@
  * \copyright Copyright (c) 2018 Scandit AG. All rights reserved.
  */
 #include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
 #include <dirent.h>
 #include <stdio.h>
-#include <string.h>
 #include <assert.h>
 #include <sys/time.h>
-
 // #include <SDL2/SDL_image.h>
-
 #include <opencv2/imgcodecs.hpp>
 #include <Scandit/ScRecognitionContext.h>
 #include <Scandit/ScBarcodeScanner.h>
@@ -123,15 +123,15 @@ static ScBool read_image(const char* image_name, uint8_t **data, uint32_t *width
     std::cout <<  "OpenCV could not open or find the image" << std::endl ;
     return SC_FALSE;
   }
-  // *data = image.data;
+  *data = image.data;
   *width = image.cols;
   *height = image.rows;
   *row_stride = image.step[0];
 
   const int blob_size = *row_stride * *height;
 
-  *data = (uint8_t *)malloc(blob_size);
-  memcpy(*data, image.data, blob_size);
+  // *data = (uint8_t *)malloc(blob_size);
+  // memcpy(*data, image.data, blob_size);
 
   std::cout<< "Image: "<< image_name << ", size: " << *width << " * " << *height << ", stride " << *row_stride << "("<< blob_size << " bytes)" << std::endl;
 
@@ -185,12 +185,16 @@ int main(int argc, const char *argv[])
   printf("Scandit SDK Version: %s\n", SC_VERSION_STRING);
 
   int return_code = 0;
+  float fCostTime = 0;
+  std::vector<std::string> result_vector;
+  std::vector<float> time_vector;
+  std::vector<std::string> type_vector;
 
   ScRecognitionContext *context = NULL;
   ScBarcodeScanner *scanner = NULL;
   ScImageDescription *image_descr = NULL;
   ScBarcodeScannerSettings *settings = NULL;
-  uint8_t *image_data = NULL;
+  // uint8_t *image_data = NULL;
 
   InputImage const * const images = get_input_files(argc, argv);
 
@@ -280,16 +284,28 @@ int main(int argc, const char *argv[])
       // goto cleanup;
   }
 
-  float fCostTime = 0;
   for (InputImage const *current_image = images; current_image != NULL; current_image = current_image->next) 
   {
-    // Load the image from disc.
+    // // Load the image from disc.
     uint32_t image_width, image_height, row_stride;
-    if (read_image(current_image->file_name, &image_data, &image_width, &image_height, &row_stride) == SC_FALSE) {
-      printf("Failed to load image '%s'.\n", current_image->file_name);
-      return_code = -1;
-      // goto cleanup;
+    // if (read_image(current_image->file_name, &image_data, &image_width, &image_height, &row_stride) == SC_FALSE) {
+    //   printf("Failed to load image '%s'.\n", current_image->file_name);
+    //   return_code = -1;
+    //   // goto cleanup;
+    // }
+    cv::Mat cv_image;
+    const std::string image_name_str(current_image->file_name);
+    cv_image = cv::imread(image_name_str, cv::IMREAD_GRAYSCALE);
+    if(cv_image.empty())               
+    {
+      std::cout <<  "OpenCV could not open or find the image " << image_name_str << std::endl ;
+      return 0;
     }
+    image_width = cv_image.cols;
+    image_height = cv_image.rows;
+    row_stride = cv_image.step[0];
+    const int blob_size = row_stride * image_height;
+    std::cout<< "Image: "<< image_name_str << ", size: " << image_width << " * " << image_height << ", stride " << row_stride << "("<< blob_size << " bytes)" << std::endl;
 
     // begin time
     struct timeval ullTimeBegin, ullTimeEnd;
@@ -310,7 +326,7 @@ int main(int argc, const char *argv[])
 
     ScProcessFrameResult result =
             sc_recognition_context_process_frame(context, image_descr,
-                                                  image_data);
+                                                  cv_image.data);
     if (result.status != SC_RECOGNITION_CONTEXT_STATUS_SUCCESS) {
       printf("Processing frame failed with error %d: '%s'\n", result.status,
               sc_context_status_flag_get_message(result.status));
@@ -343,7 +359,7 @@ int main(int argc, const char *argv[])
       std::cout << "    Total barcode(s) found: " << num_codes << ". Total time spent: " << fCostTime << std::endl;
     }
 
-    for (uint32_t iIndex = 0; iIndex < num_codes; iIndex)
+    for (uint32_t iIndex = 0; iIndex < num_codes; iIndex++)
     {
       const ScBarcode * barcode = sc_barcode_array_get_item_at(new_codes, iIndex);
       ScByteArray data = sc_barcode_get_data(barcode);
@@ -358,11 +374,40 @@ int main(int argc, const char *argv[])
       std::cout << "        Barcode " << iIndex + 1 << ":" << std::endl;
       std::cout << "            Type " << symbology_name << std::endl;
       std::cout << "            Value " << data.str << std::endl;
+      result_vector.push_back(data.str);
+      time_vector.push_back(fCostTime);
+      type_vector.push_back(symbology_name);
     }
-    // sc_barcode_array_release(new_codes);
-
+    sc_barcode_array_release(new_codes);
+    cv_image.release();
     // free(image_data);
     // image_data = NULL;
+
+    // write to csv file
+    int result_size = result_vector.size();
+    int time_size = time_vector.size();
+    int type_size = type_vector.size();
+    if(result_size != time_size)
+    {
+      std::cout << "The result vector size is not equal to time vector size !!! cannot write to csv file" << std::endl; 
+      return 0;
+    }
+    std::ofstream ofs ("scandit_result.csv", std::ofstream::out);
+    for(int i = 0; i < result_size; i++)
+    {
+      ofs << result_vector[i] << '\t';
+    }
+    ofs << '\n';
+    for(int i = 0; i < time_size; i++)
+    {
+      ofs << time_vector[i] << '\t';
+    }
+    ofs << '\n';
+    for(int i = 0; i < type_size; i++)
+    {
+      ofs << type_vector[i] << '\t';
+    }
+    ofs.close();
   }
 
 cleanup:
@@ -373,7 +418,7 @@ cleanup:
   sc_recognition_context_release(context);
   sc_image_description_release(image_descr);
 
-  free(image_data);
+  // free(image_data);
   for (InputImage const *current_image = images; current_image != NULL;) 
   {
     InputImage const *next_image = current_image->next;
