@@ -62,46 +62,56 @@ static int has_valid_extension(char const *file_name)
   return SC_FALSE;
 }
 
-std::vector<std::string> get_input_files(int argc, char const *argv[])
+static InputImage *push_if_valid_image(char const * filename, InputImage *container)
 {
-  std::vector<std::string> file_name_vec;
-  // We skip the first argument
-  for (int arg_idx = 1; arg_idx < argc; ++arg_idx) 
+  if (has_valid_extension(filename) == SC_TRUE) 
   {
-    char const * const current_arg = argv[arg_idx];
+    InputImage *new_image = (InputImage *)malloc(sizeof(InputImage));
+    const size_t target_size = strlen(filename) + 1;
+    new_image->file_name = (char *)malloc(target_size);
+    strncpy((char*)new_image->file_name, filename, target_size);
 
-    DIR *dir;
-    struct dirent *ent;
-    if ((dir = opendir(current_arg)) != NULL) 
+    new_image->next = container;
+
+    container = new_image;
+  }
+  return container;
+}
+
+InputImage const *get_input_files(int argc, char const *argv[])
+{
+    InputImage *ret = NULL;
+
+    // We skip the first argument
+    for (int arg_idx = 1; arg_idx < argc; ++arg_idx) 
     {
-      // We have a directory
-      while ((ent = readdir (dir)) != NULL) 
+      char const * const current_arg = argv[arg_idx];
+
+      DIR *dir;
+      struct dirent *ent;
+      if ((dir = opendir(current_arg)) != NULL) 
       {
-        char *combined_name = (char *)malloc(sizeof(current_arg) + sizeof(ent->d_name) + 2);
-        combined_name[0] = '\0';
-        strcat(combined_name, current_arg);
-        strcat(combined_name, "/");
-        strcat(combined_name, ent->d_name);
-        // std::cout << "wen jian ming" << combined_name << std::endl;
-        if (has_valid_extension(combined_name) == SC_TRUE)
+        // We have a directory
+        while ((ent = readdir (dir)) != NULL) 
         {
-          file_name_vec.push_back(combined_name);
-        } 
-      }
-      std::sort(file_name_vec.begin(), file_name_vec.end());
-      closedir (dir);
-    } 
-    else 
-    {
-      // We have a file
-      if (has_valid_extension(current_arg) == SC_TRUE)
+          char *combined_name = (char *)malloc(sizeof(current_arg) + sizeof(ent->d_name) + 2);
+          combined_name[0] = '\0';
+          strcat(combined_name, current_arg);
+          strcat(combined_name, "/");
+          strcat(combined_name, ent->d_name);
+          // std::cout << "wen jian ming" << combined_name << std::endl;
+          ret = push_if_valid_image(combined_name, ret);
+        }
+        closedir (dir);
+      } 
+      else 
       {
-        file_name_vec.push_back(current_arg);
+        // We have a file
+        ret = push_if_valid_image(current_arg, ret);
       }
     }
-  }
 
-  return file_name_vec;
+    return ret;
 }
 
 /**
@@ -124,11 +134,50 @@ static ScBool read_image(const char* image_name, uint8_t **data, uint32_t *width
 
   const int blob_size = *row_stride * *height;
 
+  // *data = (uint8_t *)malloc(blob_size);
+  // memcpy(*data, image.data, blob_size);
+
   std::cout<< "Image: "<< image_name << ", size: " << *width << " * " << *height << ", stride " << *row_stride << "("<< blob_size << " bytes)" << std::endl;
 
   return SC_TRUE;
 }
 
+// /**
+//  * Helper function to load image from disk using SDL2
+//  */
+// static ScBool load_image(const char* image_name, uint8_t** data,
+//                          uint32_t* width, uint32_t *height,
+//                          uint32_t* row_stride)
+// {
+//     SDL_Surface *image = IMG_Load(image_name);
+//     if (image == NULL) {
+//         printf("IMG_Load '%s' failed: %s\n", image_name, IMG_GetError());
+//         return SC_FALSE;
+//     }
+
+//     SDL_Surface* image_rgb = SDL_ConvertSurfaceFormat(image,
+//                                                       SDL_PIXELFORMAT_RGB24,
+//                                                       0);
+//     SDL_FreeSurface(image);
+//     if (image_rgb == NULL) {
+//         printf("Image '%s' convertion failed: %s\n", image_name, IMG_GetError());
+//         return SC_FALSE;
+//     }
+
+//     *width = image_rgb->w;
+//     *height = image_rgb->h;
+//     *row_stride = image_rgb->pitch;
+//     const int blob_size = *row_stride * *height;
+
+//     printf("Image '%s' size: %ux%u, stride %u (%u bytes)\n", image_name, *width, *height,
+//            *row_stride, blob_size);
+//     *data = malloc(blob_size);
+//     memcpy(*data, image_rgb->pixels, blob_size);
+
+//     SDL_FreeSurface(image_rgb);
+
+//     return SC_TRUE;
+// }
 void writeToFile(std::vector<float> time_vec, std::vector<std::string> result_vec, std::vector<std::string> type_vec, std::string file_name)
 {
   int result_size = result_vec.size();
@@ -188,12 +237,11 @@ int main(int argc, const char *argv[])
   char * token;
   char * str = strdup(argv[1]);
   token = strtok(str, "/");
-  while(token != NULL)
-  {
-    suffix_vec.push_back(std::string(token));
-    // the call is treated as a subsequent calls to strtok:
-    // the function continues from where it left in previous invocation
-    token = strtok(NULL, "/");
+  while(token != NULL){
+      suffix_vec.push_back(std::string(token));
+      // the call is treated as a subsequent calls to strtok:
+      // the function continues from where it left in previous invocation
+      token = strtok(NULL, "/");
   }
   std::reverse(suffix_vec.begin(), suffix_vec.end()); 
   suffix_vec.erase(suffix_vec.begin() + 3, suffix_vec.end());
@@ -216,12 +264,7 @@ int main(int argc, const char *argv[])
   ScBarcodeScannerSettings *settings = NULL;
   // uint8_t *image_data = NULL;
 
-  // load all image file's name
-  std::vector<std::string> file_name_vec = get_input_files(argc, argv);
-  for(auto it = file_name_vec.begin(); it != file_name_vec.end(); it++)
-  {
-    std::cout << "file name: " << *it << std::endl;
-  }
+  InputImage const * const images = get_input_files(argc, argv);
 
   // Create a recognition context. Files created by the recognition context and the 
   // attached scanners should be written to /tmp. You can use any other writable data 
@@ -306,8 +349,7 @@ int main(int argc, const char *argv[])
     return 0;
   }
 
-  // for (InputImage const *current_image = images; current_image != NULL; current_image = current_image->next) 
-  for (std::string image_name : file_name_vec)
+  for (InputImage const *current_image = images; current_image != NULL; current_image = current_image->next) 
   {
     // opencv read the image from disc.
     uint32_t image_width, image_height, row_stride;
@@ -317,7 +359,7 @@ int main(int argc, const char *argv[])
     //   // goto cleanup;
     // }
     cv::Mat cv_image;
-    const std::string image_name_str(image_name);
+    const std::string image_name_str(current_image->file_name);
     cv_image = cv::imread(image_name_str, cv::IMREAD_GRAYSCALE);
     if(cv_image.empty())               
     {
@@ -348,9 +390,9 @@ int main(int argc, const char *argv[])
     sc_recognition_context_start_new_frame_sequence(context);
 
     ScProcessFrameResult result = sc_recognition_context_process_frame(context, image_descr, cv_image.data);
-    if (result.status != SC_RECOGNITION_CONTEXT_STATUS_SUCCESS) 
-    {
-      printf("Processing frame failed with error %d: '%s'\n", result.status, sc_context_status_flag_get_message(result.status));
+    if (result.status != SC_RECOGNITION_CONTEXT_STATUS_SUCCESS) {
+      printf("Processing frame failed with error %d: '%s'\n", result.status,
+              sc_context_status_flag_get_message(result.status));
       return 0;
     }
 
