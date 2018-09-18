@@ -142,7 +142,33 @@ InputImage const *get_input_files(int argc, char const *argv[])
 
 //   return true;
 // }
-
+void writeToFile(std::vector<float> time_vec, std::vector<std::string> result_vec, std::vector<std::string> type_vec)
+{
+  int result_size = result_vec.size();
+  int time_size = time_vec.size();
+  int type_size = type_vec.size();
+  if(result_size != time_size)
+  {
+    std::cout << "The result vector size is not equal to time vector size !!! cannot write to csv file" << std::endl; 
+    return;
+  }
+  std::ofstream ofs ("dynamsoft_result.csv", std::ofstream::out);
+  for(int i = 0; i < result_size; i++)
+  {
+    ofs << result_vec[i] << '\t';
+  }
+  ofs << '\n';
+  for(int i = 0; i < time_size; i++)
+  {
+    ofs << time_vec[i] << '\t';
+  }
+  ofs << '\n';
+  for(int i = 0; i < type_size; i++)
+  {
+    ofs << type_vec[i] << '\t';
+  }
+  ofs.close();
+}
 
 
 
@@ -214,57 +240,31 @@ int main(int argc, const char* argv[])
     STextResultArray *paryResult = NULL;
     reader.GetAllTextResults(&paryResult);
 
+    time_vector.push_back(fCostTime);
     if (paryResult->nResultsCount == 0)
     {
       std::cout << "    No barcode found. Total time spent: " << fCostTime << " seconds."<< std::endl;
+      result_vector.push_back("");
+      type_vector.push_back("");
     }
     else
     {
       std::cout << "    Total barcode(s) found: " << paryResult->nResultsCount << ". Total time spent: " << fCostTime << std::endl;
+      for (int iIndex = 0; iIndex < paryResult->nResultsCount; iIndex++)
+      {
+        std::cout << "        Barcode " << iIndex + 1 << ":" << std::endl;
+        std::cout << "            Type " << paryResult->ppResults[iIndex]->pszBarcodeFormatString << std::endl;
+        std::cout << "            Value " << paryResult->ppResults[iIndex]->pszBarcodeText << std::endl;
+        result_vector.push_back(paryResult->ppResults[iIndex]->pszBarcodeText);
+        type_vector.push_back(paryResult->ppResults[iIndex]->pszBarcodeFormatString);
+
+      }
     }
-    for (int iIndex = 0; iIndex < paryResult->nResultsCount; iIndex++)
-    {
-      std::cout << "        Barcode " << iIndex + 1 << ":" << std::endl;
-      std::cout << "            Type " << paryResult->ppResults[iIndex]->pszBarcodeFormatString << std::endl;
-      std::cout << "            Value " << paryResult->ppResults[iIndex]->pszBarcodeText << std::endl;
-      result_vector.push_back(paryResult->ppResults[iIndex]->pszBarcodeText);
-      time_vector.push_back(fCostTime);
-      type_vector.push_back(paryResult->ppResults[iIndex]->pszBarcodeFormatString);
-
-
-    }
-
     CBarcodeReader::FreeTextResults(&paryResult);
-
   }
-
-
 
   // write to csv file
-  int result_size = result_vector.size();
-  int time_size = time_vector.size();
-  int type_size = type_vector.size();
-  if(result_size != time_size)
-  {
-    std::cout << "The result vector size is not equal to time vector size !!! cannot write to csv file" << std::endl; 
-    return 0;
-  }
-  std::ofstream ofs ("dynamsoft_result.csv", std::ofstream::out);
-  for(int i = 0; i < result_size; i++)
-  {
-    ofs << result_vector[i] << '\t';
-  }
-  ofs << '\n';
-  for(int i = 0; i < time_size; i++)
-  {
-    ofs << time_vector[i] << '\t';
-  }
-  ofs << '\n';
-  for(int i = 0; i < type_size; i++)
-  {
-    ofs << type_vector[i] << '\t';
-  }
-  ofs.close();
+  writeToFile(time_vector, result_vector, type_vector);
   return 0;
 }
 

@@ -140,6 +140,33 @@ InputImage const *get_input_files(int argc, char const *argv[])
 
 //   return true;
 // }
+void writeToFile(std::vector<float> time_vec, std::vector<std::string> result_vec, std::vector<std::string> type_vec)
+{
+  int result_size = result_vec.size();
+  int time_size = time_vec.size();
+  int type_size = type_vec.size();
+  if(result_size != time_size)
+  {
+    std::cout << "The result vector size is not equal to time vector size !!! cannot write to csv file" << std::endl; 
+    return;
+  }
+  std::ofstream ofs ("zbar_result.csv", std::ofstream::out);
+  for(int i = 0; i < result_size; i++)
+  {
+    ofs << result_vec[i] << '\t';
+  }
+  ofs << '\n';
+  for(int i = 0; i < time_size; i++)
+  {
+    ofs << time_vec[i] << '\t';
+  }
+  ofs << '\n';
+  for(int i = 0; i < type_size; i++)
+  {
+    ofs << type_vec[i] << '\t';
+  }
+  ofs.close();
+}
 
 
 
@@ -195,60 +222,38 @@ int main(int argc, const char* argv[])
     int n = scanner.scan(zbar_image);
     gettimeofday(&ullTimeEnd, NULL);
     fCostTime = (float)((ullTimeEnd.tv_sec * 1000 * 1000 +  ullTimeEnd.tv_usec) - (ullTimeBegin.tv_sec * 1000 * 1000 + ullTimeBegin.tv_usec))/(1000 * 1000);
+    time_vector.push_back(fCostTime);
 
 
 
     if (zbar_image.symbol_begin() == zbar_image.symbol_end()) 
     {
       std::cout << "    No barcode found. Total time spent: " << fCostTime << " seconds."<< std::endl;
+      result_vector.push_back("");
+      type_vector.push_back("");
     }
-    else{
-      std::cout << "    Total barcode(s) found: " << n << ". Total time spent: " << fCostTime << std::endl;
-    }
-    // output decoding results
-    int iIndex = 0;
-    for(zbar::Image::SymbolIterator symbol = zbar_image.symbol_begin(); symbol != zbar_image.symbol_end(); ++symbol) 
+    else
     {
-      std::cout << "        Barcode " << iIndex + 1 << ":" << std::endl;
-      std::cout << "            Type: " << symbol->get_type_name() << std::endl;
-      std::cout << "            Value: " << symbol->get_data() << std::endl;
-      result_vector.push_back(symbol->get_data());
-      time_vector.push_back(fCostTime);
-      type_vector.push_back(symbol->get_type_name());
-      iIndex++;
+      std::cout << "    Total barcode(s) found: " << n << ". Total time spent: " << fCostTime << std::endl;
+      // output decoding results
+      int iIndex = 0;
+      for(zbar::Image::SymbolIterator symbol = zbar_image.symbol_begin(); symbol != zbar_image.symbol_end(); ++symbol) 
+      {
+        std::cout << "        Barcode " << iIndex + 1 << ":" << std::endl;
+        std::cout << "            Type: " << symbol->get_type_name() << std::endl;
+        std::cout << "            Value: " << symbol->get_data() << std::endl;
+        result_vector.push_back(symbol->get_data());
+        type_vector.push_back(symbol->get_type_name());
+        iIndex++;
+      }
     }
-
     // clean up
     zbar_image.set_data(NULL, 0);
 
   }
-
-
   // write to csv file
-  int result_size = result_vector.size();
-  int time_size = time_vector.size();
-  int type_size = type_vector.size();
-  if(result_size != time_size)
-  {
-    std::cout << "The result vector size is not equal to time vector size !!! cannot write to csv file" << std::endl; 
-    return 0;
-  }
-  std::ofstream ofs ("zbar_result.csv", std::ofstream::out);
-  for(int i = 0; i < result_size; i++)
-  {
-    ofs << result_vector[i] << '\t';
-  }
-  ofs << '\n';
-  for(int i = 0; i < time_size; i++)
-  {
-    ofs << time_vector[i] << '\t';
-  }
-  ofs << '\n';
-  for(int i = 0; i < type_size; i++)
-  {
-    ofs << type_vector[i] << '\t';
-  }
-  ofs.close();
+  writeToFile(time_vector, result_vector, type_vector);
+
   return 0;
 }
 
