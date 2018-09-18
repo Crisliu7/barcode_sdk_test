@@ -21,7 +21,7 @@ $(OBJECT): $(SOURCE)
 
 
 all:
-	g++ -O2 -std=c++0x dynamsoft.cpp -lDynamsoftBarcodeReader $(LDFLAGS) -lz -lpthread `pkg-config opencv --cflags --libs` -o dynamsoft
+	g++ -O2 -std=c++0x dynamsoft.cpp ../Tools.cpp -lDynamsoftBarcodeReader $(LDFLAGS) -lz -lpthread `pkg-config opencv --cflags --libs` -o dynamsoft
 # the clean target
 .PHONY : clean
 clean: 
