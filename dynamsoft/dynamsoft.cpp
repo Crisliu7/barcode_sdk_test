@@ -50,8 +50,8 @@ int main(int argc, const char* argv[])
   // reader.InitLicense("t0068MgAAAIl+c7nncpOUUJwhgX7nKryqYnqU/dnX2EC+WLcRUiegYAYnlLdh4l6mKrugNC1JQabojs+yfgUYhJqQ17qpH7o=");
 
   // reader settings
-  // PublicRuntimeSettings *settings;
-  // reader.GetRuntimeSettings(settings);
+  PublicRuntimeSettings *settings;
+  reader.GetRuntimeSettings(settings);
   // settings -> mExpectedBarcodesCount = 1;
   // settings -> mMaxBarcodesCount = 2;
   // settings -> mAntiDamageLevel = 9;
@@ -118,7 +118,7 @@ int main(int argc, const char* argv[])
         std::cout << "            Value " << paryResult->ppResults[iIndex]->pszBarcodeText << std::endl;
         dynamsoftTools.result_vec.push_back(paryResult->ppResults[iIndex]->pszBarcodeText);
         dynamsoftTools.type_vec.push_back(paryResult->ppResults[iIndex]->pszBarcodeFormatString);
-
+        break;
       }
     }
     CBarcodeReader::FreeTextResults(&paryResult);
@@ -127,48 +127,7 @@ int main(int argc, const char* argv[])
   }
 
   // write to csv file
-  dynamsoftTools.writeToFile(file_name);
+  dynamsoftTools.writeToFile("data/" + file_name + "_result.csv");
   return 0;
 }
 
-
-
-
-
-
-/**
- * Helper function to load image from disk using SDL2
- */
-// static bool read_image(const char* image_name, uint8_t** data,
-//                          uint32_t* width, uint32_t *height,
-//                          uint32_t* row_stride)
-// {
-//   SDL_Surface *image = IMG_Load(image_name);
-//   if (image == NULL) {
-//       printf("IMG_Load '%s' failed: %s\n", image_name, IMG_GetError());
-//       return false;
-//   }
-
-//   SDL_Surface* image_rgb = SDL_ConvertSurfaceFormat(image,
-//                                                     SDL_PIXELFORMAT_RGB24,
-//                                                     0);
-//   SDL_FreeSurface(image);
-//   if (image_rgb == NULL) {
-//       printf("Image '%s' convertion failed: %s\n", image_name, IMG_GetError());
-//       return false;
-//   }
-
-//   *width = image_rgb->w;
-//   *height = image_rgb->h;
-//   *row_stride = image_rgb->pitch;
-//   const int blob_size = *row_stride * *height;
-
-//   printf("Image '%s' size: %ux%u, stride %u (%u bytes)\n", image_name, *width, *height,
-//           *row_stride, blob_size);
-//   *data = (uint8_t *)malloc(blob_size);
-//   memcpy(*data, image_rgb->pixels, blob_size);
-
-//   SDL_FreeSurface(image_rgb);
-
-//   return true;
-// }

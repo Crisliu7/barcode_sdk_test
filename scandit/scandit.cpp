@@ -185,6 +185,7 @@ int main(int argc, const char *argv[])
 
     // Fill the image description for our loaded image.
     const uint32_t image_memory_size = scanditTools.row_stride * scanditTools.image_height;
+    std::cout << "memory_size: " << image_memory_size << std::endl;
     sc_image_description_set_layout(image_descr, SC_IMAGE_LAYOUT_GRAY_8U);
     sc_image_description_set_width(image_descr, scanditTools.image_width);
     sc_image_description_set_height(image_descr, scanditTools.image_height);
@@ -261,7 +262,7 @@ int main(int argc, const char *argv[])
   }
   // write to csv file
 
-  scanditTools.writeToFile(file_name + "_result.csv");
+  scanditTools.writeToFile("data/" + file_name + "_result.csv");
 
   return 0;
 }

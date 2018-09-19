@@ -1,0 +1,103 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "zbar",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "zbar"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "scandit",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "scandit"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "dynamsoft",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "dynamsoft"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "all",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "all"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "clean",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "clean"
+            ],
+
+        }
+        // {
+        //     "label": "zbar",
+        //     "type": "shell",
+        //     "command": "g++",
+        //     "args": [
+        //         "-g", "-O2", "-std=c++0x", "zbar/zbar.cpp", "Tools.cpp", "-lzbar", "-lz", "-lpthread", "`pkg-config", "opencv", "--cflags", "--libs`", "-o", "zbar/zbar"
+        //     ],
+        //     "group": {
+        //         "kind": "build",
+        //         "isDefault": true
+        //     }
+        // },
+        // {
+        //     "label": "scandit",
+        //     "type": "shell",
+        //     "command": "g++",
+        //     "args": [
+        //         "-g", "-O2", "-std=c++0x", "scandit/scandit.cpp", "Tools.cpp", "-lscanditsdk", "-lz", "-lpthread", "`pkg-config", "opencv", "--cflags", "--libs`", "-o", "scandit/scandit"
+        //     ],
+        //     "group": {
+        //         "kind": "build",
+        //         "isDefault": true
+        //     }
+        // },
+        // {
+        //     "label": "dynamsoft",
+        //     "type": "shell",
+        //     "command": "g++",
+        //     "args": [
+        //         "-g", "-O2", "-std=c++0x", "dynamsoft/dynamsoft.cpp", "Tools.cpp", "-lDynamsoftBarcodeReader", "-L", "dynamsoft/lib", "-Wl,-rpath=dynamsoft/lib", "-Wl,-rpath=./", "-lz", "-lpthread", "`pkg-config", "opencv", "--cflags", "--libs`", "-o", "dynamsoft/dynamsoft"
+        //     ],
+        //     "group": {
+        //         "kind": "build",
+        //         "isDefault": true
+        //     }
+        // },
+
+    ]
+    
+
+}

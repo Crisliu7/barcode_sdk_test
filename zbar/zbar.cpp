@@ -89,6 +89,7 @@ int main(int argc, const char* argv[])
         zbarTools.result_vec.push_back(symbol->get_data());
         zbarTools.type_vec.push_back(symbol->get_type_name());
         iIndex++;
+        break;
       }
     }
     // clean up
@@ -98,7 +99,7 @@ int main(int argc, const char* argv[])
 
   }
   // write to csv file
-  zbarTools.writeToFile(file_name);
+  zbarTools.writeToFile("data/" + file_name + "_result.csv");
 
   return 0;
 }
