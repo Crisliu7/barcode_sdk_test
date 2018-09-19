@@ -50,12 +50,12 @@ int main(int argc, const char* argv[])
   // reader.InitLicense("t0068MgAAAIl+c7nncpOUUJwhgX7nKryqYnqU/dnX2EC+WLcRUiegYAYnlLdh4l6mKrugNC1JQabojs+yfgUYhJqQ17qpH7o=");
 
   // reader settings
-  PublicRuntimeSettings *settings;
-  reader.GetRuntimeSettings(settings);
-  settings -> mExpectedBarcodesCount = 1;
-  settings -> mMaxBarcodesCount = 2;
-  settings -> mAntiDamageLevel = 9;
-  reader.UpdateRuntimeSettings(settings);
+  // PublicRuntimeSettings *settings;
+  // reader.GetRuntimeSettings(settings);
+  // settings -> mExpectedBarcodesCount = 1;
+  // settings -> mMaxBarcodesCount = 2;
+  // settings -> mAntiDamageLevel = 9;
+  // reader.UpdateRuntimeSettings(settings);
 
 
 
@@ -77,10 +77,9 @@ int main(int argc, const char* argv[])
     // decode and calculate time cost
 	  struct timeval ullTimeBegin, ullTimeEnd;
     gettimeofday(&ullTimeBegin, NULL);
-    const char *image_name_char = image_name.c_str();     
-    iRet = reader.DecodeFile(image_name_char);
-    // iRet = reader.DecodeBuffer(image_data, image_width, image_height, row_stride, IPF_RGB_888, "");
-    // iRet = reader.DecodeBuffer(dynamsoftTools.data, dynamsoftTools.image_width, dynamsoftTools.image_height, dynamsoftTools.row_stride, IPF_GrayScaled, "");
+    // const char *image_name_char = image_name.c_str();     
+    // iRet = reader.DecodeFile(image_name_char);
+    iRet = reader.DecodeBuffer(dynamsoftTools.data, dynamsoftTools.image_width, dynamsoftTools.image_height, dynamsoftTools.row_stride, IPF_GrayScaled, "");
     gettimeofday(&ullTimeEnd, NULL);
     dynamsoftTools.fCostTime = (float)((ullTimeEnd.tv_sec * 1000 * 1000 +  ullTimeEnd.tv_usec) - (ullTimeBegin.tv_sec * 1000 * 1000 + ullTimeBegin.tv_usec))/(1000 * 1000);
 
@@ -123,6 +122,8 @@ int main(int argc, const char* argv[])
       }
     }
     CBarcodeReader::FreeTextResults(&paryResult);
+    free(dynamsoftTools.data);
+
   }
 
   // write to csv file

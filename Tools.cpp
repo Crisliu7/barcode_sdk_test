@@ -121,7 +121,7 @@ bool Tools::read_image(std::string image_name)
     std::cout <<  "OpenCV could not open or find the image" << std::endl ;
     return false;
   }
-  data = cv_image.data;
+  // data = cv_image.data;
   // std::cout << "value: " << *data << std ::endl; 
 
   // std::cout << data << std::endl; 
@@ -131,8 +131,11 @@ bool Tools::read_image(std::string image_name)
   row_stride = cv_image.step[0];
   blob_size = row_stride * image_height;
 
+  data = (uint8_t *)malloc(blob_size);
+  memcpy(data, cv_image.data, blob_size);
+
   // std::cout<< "Image: "<< image_name << ", size: " << *width << " * " << *height << ", stride " << *row_stride << "("<< blob_size << " bytes)" << std::endl;
-  // cv_image.release();
+  cv_image.release();
 
   return true;
 }

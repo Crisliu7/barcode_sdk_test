@@ -54,18 +54,19 @@ int main(int argc, const char* argv[])
     std::cout << "Image: "<< image_name<< ", size: " << zbarTools.image_width << " * " << zbarTools.image_height
                << ", stride " << zbarTools.row_stride << "("<< zbarTools.blob_size << " bytes)" << std::endl;
 
-    std::cout << zbarTools.data << std::endl; 
     
     // decode and calculate time cost
 	  struct timeval ullTimeBegin, ullTimeEnd;
     gettimeofday(&ullTimeBegin, NULL);    
     // wrap image data
-    zbar::Image zbar_image(zbarTools.image_width, zbarTools.image_height, "GREY", &(zbarTools.data), zbarTools.row_stride);
+    zbar::Image zbar_image(zbarTools.image_width, zbarTools.image_height, "GREY", zbarTools.data, zbarTools.row_stride);
     // scan the image for barcodes
     int n = scanner.scan(zbar_image);
     gettimeofday(&ullTimeEnd, NULL);
     zbarTools.fCostTime = (float)((ullTimeEnd.tv_sec * 1000 * 1000 +  ullTimeEnd.tv_usec) - (ullTimeBegin.tv_sec * 1000 * 1000 + ullTimeBegin.tv_usec))/(1000 * 1000);
     zbarTools.time_vec.push_back(zbarTools.fCostTime);
+
+
   
 
 
@@ -92,6 +93,8 @@ int main(int argc, const char* argv[])
     }
     // clean up
     zbar_image.set_data(NULL, 0);
+    free(zbarTools.data);
+
 
   }
   // write to csv file

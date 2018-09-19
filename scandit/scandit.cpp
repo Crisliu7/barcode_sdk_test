@@ -177,7 +177,7 @@ int main(int argc, const char *argv[])
 
     std::cout << "Image: "<< image_name<< ", size: " << scanditTools.image_width << " * " << scanditTools.image_height
                << ", stride " << scanditTools.row_stride << "("<< scanditTools.blob_size << " bytes)" << std::endl;
-    std::cout << scanditTools.data << std::endl; 
+    // std::cout << scanditTools.data << std::endl; 
 
     // begin time
     struct timeval ullTimeBegin, ullTimeEnd;
@@ -198,6 +198,9 @@ int main(int argc, const char *argv[])
 
     // std::cout << "image data: " << scanditTools.data << std::endl;
     ScProcessFrameResult result = sc_recognition_context_process_frame(context, image_descr, scanditTools.data);
+
+
+
     if (result.status != SC_RECOGNITION_CONTEXT_STATUS_SUCCESS) 
     {
       printf("Processing frame failed with error %d: '%s'\n", result.status, sc_context_status_flag_get_message(result.status));
@@ -251,7 +254,7 @@ int main(int argc, const char *argv[])
 
 
     sc_barcode_array_release(new_codes);
-    // cv_image.release();
+    free(scanditTools.data);
     // free(image_data);
     // image_data = NULL;
 
