@@ -46,7 +46,8 @@
         "tuple": "cpp",
         "typeindex": "cpp",
         "typeinfo": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "string": "cpp"
     },
     "python.pythonPath": "/home/zliu/anaconda3/envs/barcode/bin/python"
 }

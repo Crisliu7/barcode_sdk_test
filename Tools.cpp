@@ -122,6 +122,10 @@ bool Tools::read_image(std::string image_name)
     return false;
   }
   data = cv_image.data;
+  // std::cout << "value: " << *data << std ::endl; 
+
+  // std::cout << data << std::endl; 
+
   image_width = cv_image.cols;
   image_height = cv_image.rows;
   row_stride = cv_image.step[0];

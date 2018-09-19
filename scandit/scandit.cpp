@@ -177,6 +177,7 @@ int main(int argc, const char *argv[])
 
     std::cout << "Image: "<< image_name<< ", size: " << scanditTools.image_width << " * " << scanditTools.image_height
                << ", stride " << scanditTools.row_stride << "("<< scanditTools.blob_size << " bytes)" << std::endl;
+    std::cout << scanditTools.data << std::endl; 
 
     // begin time
     struct timeval ullTimeBegin, ullTimeEnd;
